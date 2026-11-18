@@ -1,2 +1,15 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Force embedded source files and configs to always use LF (Linux standard)
+*.ino text eol=lf
+*.cpp text eol=lf
+*.h text eol=lf
+*.ini text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+
+# Explicitly mark any binary or firmware image files if added later
+*.bin binary
+*.hex binary
+*.elf binary
