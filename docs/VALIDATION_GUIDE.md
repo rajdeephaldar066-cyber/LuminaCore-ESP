@@ -12,7 +12,9 @@ This guide describes repeatable tests for the current firmware. Run electrical t
 | Motion hold | Move during Night Assist | Three-minute hold timer is refreshed |
 | Timeout | Stop motion and allow the hold timer to expire | System returns to Sleep |
 | Mode button | Press Mode from Sleep repeatedly | State sequence is Night Assist, Task Active, Sleep |
-| Brightness buttons | In Task Active, press Up and Down | Warm-white output changes within configured bounds |
+| Task colour presets | In Task Active, press Mode repeatedly | Five presets cycle in order and wrap to the default warm white |
+| Brightness buttons | In Task Active, press Up and Down | Selected-colour output changes within configured bounds |
+| Task Active exit | In Task Active, press Override | System returns to Sleep |
 | Emergency entry | Press Emergency | Both zones turn red at full output |
 | Emergency guard | While in Emergency, press Override and Mode | Emergency remains active |
 | Emergency exit | Press Emergency again | System returns to Sleep |
