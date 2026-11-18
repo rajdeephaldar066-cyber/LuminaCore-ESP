@@ -14,7 +14,7 @@ LuminaCore is a student-built embedded-systems project focused on practical ligh
 - **Low Power Alert:** The ring pulses amber when the battery enters the warning range. The previous operating state is restored after voltage recovery.
 - **Battery monitoring:** The ESP32 samples the divided battery voltage and applies boot, warning, and hard-cutoff thresholds.
 
-Basically, the lamp checks whether the room actually needs light before turning on. Not revolutionary, just useful at 2 a.m. And yes, that is the whole point.
+Basically, the lamp checks whether the room actually needs light before turning on. Not revolutionary, just useful at 2 a.m. Low-key, that is the whole pitch: check the room, notice motion, light the way. We are building a lamp, not giving the ESP32 an identity crisis.
 
 ## How the light sensing works
 
@@ -38,7 +38,7 @@ If the sensor is unavailable or repeated reads fail, the current firmware assume
 | Brightness Down | GPIO 33 | Active LOW |
 | Emergency button | GPIO 15 | Active LOW; ESP32 strapping pin |
 
-The firmware configures **76 addressable LEDs in total**: 16 in Zone 1 and 60 in Zone 2. Check the physical build against those counts; the code will not magically notice an extra strip because the vibes are right.
+The firmware configures **76 addressable LEDs in total**: 16 in Zone 1 and 60 in Zone 2. Check the physical build against those counts; the code will not magically notice an extra strip because the vibes are right. Please do not make the firmware guess.
 
 ## Firmware structure
 
