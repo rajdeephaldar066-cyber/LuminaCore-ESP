@@ -9,7 +9,7 @@ LuminaCore is a student-built embedded-systems project focused on practical ligh
 ## What it does
 
 - **Night Assist:** When motion is detected in Sleep and the APDS-9930 reports 15 lux or less, the 16-pixel ring turns amber. Motion refreshes the three-minute hold timer.
-- **Task Active:** Both LED zones produce warm-white light. The Up and Down buttons adjust brightness.
+- **Task Active:** Both LED zones offer five calm colour presets, starting with warm white. Press Mode to cycle the colours; use Up and Down to adjust brightness. Use Override to leave Task Active.
 - **Emergency:** Both zones turn red at full output. Only the Emergency button toggles this mode; the other buttons cannot silently cancel it.
 - **Low Power Alert:** The ring pulses amber when the battery enters the warning range. The previous operating state is restored after voltage recovery.
 - **Battery monitoring:** The ESP32 samples the divided battery voltage and applies boot, warning, and hard-cutoff thresholds.
@@ -46,9 +46,11 @@ The firmware is organized around five states: Sleep, Night Assist, Task Active, 
 
 The main reliability features include a three-second task watchdog, bounded I2C transactions, sensor-bus recovery with exponential backoff, button debouncing, a gamma 2.8 brightness table, and low-voltage hysteresis.
 
+Previous code versions from V1.0 through V4.8 exist. They are not included here at present and can be added later, if requested or required, in a separate branch.
+
 ## Build environment
 
-The source file is `LuminaCore_ESP_V5_0.ino`.
+The source file is `LuminaCore_ESP_V5_1.ino`.
 
 Required software:
 
