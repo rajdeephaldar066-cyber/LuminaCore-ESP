@@ -145,7 +145,6 @@ bool lastFrameWasBlack            = false;
 
 // LED color presets; RGB channel values are not a spectral or health measurement.
 const CRGB COLOR_NIGHT_AMBER = CRGB(255, 100, 0);
-const CRGB COLOR_TASK_WARM       = CRGB(255, 214, 170);
 const CRGB TASK_COLOR_PRESETS[] = {
   CRGB(255, 214, 170), // Warm white — default
   CRGB(255, 184, 150), // Soft peach
