@@ -1,32 +1,17 @@
 # LuminaCore ESP - Release Notes
 
-## V5.0
+## V5.1
 
-V5.0 is the current firmware line for the LuminaCore ESP lamp.
+V5.1 continues the existing LuminaCore ESP firmware line with selectable calm colour presets in Task Active.
 
-### Firmware behavior
+### Change log
 
-- Sleep, Night Assist, Task Active, Emergency, and Low Power Alert states are retained.
-- Night Assist uses PIR motion followed by an APDS-9930 ambient-light threshold check at 15 lux.
-- Task Active drives both LED zones in warm white with button-controlled brightness.
-- Emergency drives both zones red and is guarded from the Override and Mode buttons.
-- Battery voltage monitoring includes boot, warning, recovery, and hard-cutoff thresholds.
+- Added five Task Active colour presets: warm white (default), soft peach, muted lavender, gentle sage, and soft sky.
+- Mode cycles the selected colour while Task Active is running; brightness controls remain unchanged, and Override exits to Sleep.
+- Updated firmware naming and project documentation for V5.1.
 
-### Reliability updates
+Previous code versions from V1.0 through V4.8 exist. They are not included here at present and can be added later, if requested or required, in a separate branch.
 
-- Battery measurement uses ESP32 calibrated millivolt readings with explicit divider and calibration constants.
-- Watchdog initialization and loop-task subscription results are checked before watchdog resets are sent.
-- I2C transactions use a bounded timeout that is restored after bus recovery.
-- I2C retry backoff saturates at its configured ceiling.
-- LED output remains governed by a 20 ms frame interval and a smoothed brightness ramp.
+## Validation still required
 
-### Documentation updates
-
-- Project description now reflects the implemented assistive-lamp behavior.
-- Hardware assumptions and electrical verification requirements are documented separately.
-- Validation procedures and normal user operation are documented without checkbox lists.
-- Unsupported claims about fall detection, clinical fall prevention, continuous adaptive brightness, or circadian-health outcomes are avoided.
-
-### Validation still required
-
-Compilation must be confirmed with the exact ESP32 Arduino core and library versions used by the physical build. Battery voltage must be calibrated against a multimeter. LED current, supply droop, thermal performance, GPIO15 boot behavior, and GPIO13 wake behavior require bench verification.
+Compile with the exact ESP32 Arduino core and library versions used by the physical build. Verify the preset sequence, brightness behavior, measured LED current, supply stability, and thermal performance on the assembled lamp. RGB values alone do not establish spectral characteristics, colour-rendering quality, or health benefits.
