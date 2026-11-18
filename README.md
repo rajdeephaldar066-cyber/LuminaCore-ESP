@@ -1,88 +1,80 @@
-# LuminaCore ESP — V5.0
+# LuminaCore ESP
 
-**Selection-stage firmware for an ambient-aware assistive lamp.** LuminaCore uses ambient-light thresholding and motion detection to provide low-level nighttime illumination, user-controlled task lighting, emergency signalling, and battery-aware operation.
+**An ESP32-powered assistive lamp that pays attention to the room before lighting it up.** It combines ambient-light sensing and motion detection for low-level nighttime illumination, with separate task-lighting and emergency modes. The idea is simple: when the room is already bright, the lamp stays out of the way; when it is dark and someone moves, it brings up a gentle amber light.
 
-> **Scope and claims:** LuminaCore is an assistive lighting prototype. It is not a medical device, fall detector, or validated fall-prevention system. Its lux sensor is used as a threshold gate for Night Assist; the firmware does not continuously modulate brightness from lux readings. No circadian-health or blue-light safety claim is made from RGB values alone.
+It runs locally on the ESP32. No cloud account, no companion app, no “please sign in to turn on your lamp” situation. We have enough of those.
 
-## What's in V5.0
+LuminaCore is a student-built embedded-systems project focused on practical lighting control, power monitoring, and reliable behavior with real hardware. It is not a medical device or a fall detector. The PIR sensor detects motion; calling that fall detection would be a pretty wild upgrade to give one sensor.
 
-- Preserves the existing V4.9 feature set; advanced expansion features remain on the post-selection roadmap.
-- Uses ESP32 calibrated ADC millivolt readings for battery measurement, with explicit divider and calibration constants.
-- Checks watchdog initialization and loop-task subscription before feeding the watchdog.
-- Bounds I2C transactions and restores the timeout after bus recovery.
-- Saturates the I2C retry counter to avoid long-outage wraparound.
-- Updates naming and documentation to describe current lamp behavior accurately.
+## What it does
 
-## Current behavior
+- **Night Assist:** When motion is detected in Sleep and the APDS-9930 reports 15 lux or less, the 16-pixel ring turns amber. Motion refreshes the three-minute hold timer.
+- **Task Active:** Both LED zones produce warm-white light. The Up and Down buttons adjust brightness.
+- **Emergency:** Both zones turn red at full output. Only the Emergency button toggles this mode; the other buttons cannot silently cancel it.
+- **Low Power Alert:** The ring pulses amber when the battery enters the warning range. The previous operating state is restored after voltage recovery.
+- **Battery monitoring:** The ESP32 samples the divided battery voltage and applies boot, warning, and hard-cutoff thresholds.
 
-| State | Behavior |
-|---|---|
-| Sleep | LEDs off; PIR motion prompts a lux check |
-| Night Assist | When motion is detected and ambient light is at or below 15 lux, the 16-LED ring glows amber; motion refreshes a 3-minute hold timer |
-| Task Active | Both LED zones illuminate warm white; brightness is adjusted with Up/Down buttons |
-| Emergency | Both LED zones illuminate red; only the Emergency button exits this state |
-| Low Power Alert | Amber ring pulses; previous state is restored after voltage recovery |
+Basically, the lamp checks whether the room actually needs light before turning on. Not revolutionary, just useful at 2 a.m. Low-key, that is the whole pitch: check the room, notice motion, light the way. We are building a lamp, not giving the ESP32 an identity crisis.
 
-**Sensor fallback:** if the APDS-9930 is unavailable, firmware currently assumes darkness for the Night Assist decision. This favors path illumination but can cause unwanted activation; demonstrate and disclose this behavior.
+## How the light sensing works
 
-## Hardware map
+The APDS-9930 is used as a **threshold gate**, not as a continuous auto-brightness controller. While the system is in Sleep, the firmware checks for PIR motion and then polls ambient lux at a 100 ms interval. A reading at or below 15 lux can trigger Night Assist.
 
-| Component | ESP32 GPIO | Notes |
+If the sensor is unavailable or repeated reads fail, the current firmware assumes the room is dark. That keeps the path-lighting behavior available, but it can also cause an unwanted activation. The failure mode is intentional and should be understood when testing the lamp.
+
+## Hardware
+
+| Part | ESP32 pin | Notes |
 |---|---:|---|
-| APDS-9930 SDA / SCL | 21 / 22 | I2C |
-| PIR motion sensor | 27 | Digital input |
-| Zone 1 ring | 25 | 16 WS2812B LEDs |
-| Zone 2 strip | 26 | 60 WS2812B LEDs |
-| Battery ADC | 34 | 22k/10k divider assumed |
-| Override / wake button | 13 | Active LOW; RTC ext0 wake |
-| Mode button | 14 | Active LOW |
-| Brightness Up / Down | 32 / 33 | Active LOW |
-| Emergency button | 15 | Active LOW; ESP32 strapping pin—test boot with button held |
+| APDS-9930 SDA | GPIO 21 | I2C |
+| APDS-9930 SCL | GPIO 22 | I2C |
+| PIR sensor output | GPIO 27 | Motion input |
+| LED Zone 1 ring | GPIO 25 | 16 WS2812B pixels |
+| LED Zone 2 strip | GPIO 26 | 60 WS2812B pixels |
+| Battery voltage input | GPIO 34 | ADC through divider |
+| Override / wake button | GPIO 13 | Active LOW, ext0 wake |
+| Mode button | GPIO 14 | Active LOW |
+| Brightness Up | GPIO 32 | Active LOW |
+| Brightness Down | GPIO 33 | Active LOW |
+| Emergency button | GPIO 15 | Active LOW; ESP32 strapping pin |
 
-**Firmware LED count: 76 total (16 + 60).** Verify the physical count before wiring and presentation.
+The firmware configures **76 addressable LEDs in total**: 16 in Zone 1 and 60 in Zone 2. Check the physical build against those counts; the code will not magically notice an extra strip because the vibes are right. Please do not make the firmware guess.
 
-## Software requirements
+## Firmware structure
+
+The firmware is organized around five states: Sleep, Night Assist, Task Active, Emergency, and Low Power Alert. LED output is refreshed through FastLED with a 20 ms frame interval and a smoothed brightness ramp, except that Emergency snaps to full output.
+
+The main reliability features include a three-second task watchdog, bounded I2C transactions, sensor-bus recovery with exponential backoff, button debouncing, a gamma 2.8 brightness table, and low-voltage hysteresis.
+
+## Build environment
+
+The source file is `LuminaCore_ESP_V5_0.ino`.
+
+Required software:
 
 - Arduino IDE or PlatformIO
-- ESP32 Arduino core (2.x or 3.x; compile against the exact version used on the prototype)
+- ESP32 Arduino core (use the version installed on the actual device)
 - FastLED 3.6 or later
-- APDS9930 library compatible with the included APDS9930.h API
+- An APDS9930 library compatible with the `APDS9930.h` interface used by the sketch
 
-Open LuminaCore_ESP_V5_0.ino, select the correct ESP32 board and serial port, then compile and upload. Keep V4.9 source as a historical reference; use V5.0 for the selection-stage build.
+Select the correct ESP32 board, connect the board over USB, compile, and upload. Keep the serial monitor at 115200 baud to view sensor, state, and battery messages.
 
-## Calibration and safety — do before powering the complete lamp
+## Calibration and safety
 
-1. **Battery ADC:** measure the battery pack with a multimeter and compare it with serial-reported voltage at several charge levels. Confirm actual divider resistor values and adjust VOLTAGE_DIVIDER_RATIO and BATTERY_VOLTAGE_CALIBRATION. Do not assume the nominal 22k/10k ratio is exact.
-2. **Battery thresholds:** the 2S pack thresholds (6.8V boot floor, 6.6V warning, 6.2V hard cutoff) are provisional. Confirm cell manufacturer limits, BMS behavior, loaded voltage sag, and pack specifications.
-3. **LED power:** FASTLED_ESTIMATED_CURRENT_LIMIT_MA is a FastLED software estimate, not a physical current limiter. Verify supply capacity, LED current under worst-case white, wiring, connectors, fuse, thermal behavior, and battery/BMS ratings. Current configured estimate is 4000mA at 5V; do not treat it as a proven safe operating limit.
-4. **Emergency vs cutoff:** hard battery cutoff currently takes precedence over Emergency mode and can shut the lamp down during an emergency signal. This unresolved safety trade-off must be understood and evaluated.
-5. **GPIO15:** it is an ESP32 strapping pin. Test cold boot with Emergency button pressed and released; change the pin if boot behavior is unreliable.
-6. **Deep-sleep wake:** verify GPIO13 pull-up, button wiring, wake polarity, and release behavior to avoid repeated wake/sleep cycles.
-7. **Power conversion:** verify the 2S-to-5V converter input range, output regulation, thermal performance, and transient response with the actual LED load.
+Battery readings are based on `analogReadMilliVolts()`, multiplied by `VOLTAGE_DIVIDER_RATIO` and `BATTERY_VOLTAGE_CALIBRATION`. The current divider assumption is 22k/10k and a ratio of 3.20. These values must be checked against the assembled resistor network and a multimeter before relying on the battery thresholds.
 
-Never connect or disconnect LED power wiring while energized. Use a correctly rated regulated supply for bench tests and a suitable fuse/BMS for battery operation.
+The configured battery thresholds are 6.8 V for the boot floor, 6.6 V for the warning, and 6.2 V for the hard cutoff. Treat them as provisional until confirmed against the specific cell datasheet, battery-management system, and loaded voltage behavior.
 
-## Selection-stage demonstration checklist
+FastLED's 4,000 mA power setting is a software estimate, not a physical current limiter. A fuse, suitable BMS, correctly rated wiring and connectors, an adequate 5 V supply, and thermal checks are still required. Measure the actual full-white current before using the battery-powered lamp.
 
-- [ ] Bright room + motion: Night Assist does not activate.
-- [ ] Dark room (≤15 lux) + motion: amber ring activates.
-- [ ] Motion during Night Assist refreshes the hold timer; no motion allows timeout after 3 minutes.
-- [ ] Task Active lights both zones; Up/Down buttons change brightness.
-- [ ] Emergency lights both zones red; Override and Mode do not silently cancel it.
-- [ ] Low-battery alert and recovery are demonstrated safely with a bench supply or controlled setup—not by deliberately over-discharging cells.
-- [ ] Sensor disconnected/reconnected behavior is observed and documented.
-- [ ] Cold boot is tested with GPIO15 button states; deep-sleep wake is verified.
-- [ ] Battery ADC is compared with a multimeter; LED current and temperature are measured under worst-case load.
+The hard battery cutoff currently overrides Emergency mode and can turn the lamp off while the red signal is active. GPIO15 is also a strapping pin on common ESP32 boards, so cold boot must be tested with the Emergency button both pressed and released. GPIO13 deep-sleep wake behavior should also be verified on the actual board.
 
-Record short videos, measured lux values, battery voltage, current, and test conditions. These are stronger selection evidence than adding untested features.
+## Documentation
 
-## Repository layout
+- [Technical overview](docs/TECHNICAL_OVERVIEW.md)
+- [Hardware and safety notes](docs/HARDWARE_AND_SAFETY.md)
+- [Validation guide](docs/VALIDATION_GUIDE.md)
+- [User guide](docs/USER_GUIDE.md)
+- [Release notes](docs/RELEASE_NOTES.md)
 
-- LuminaCore_ESP_V5_0.ino — current selection-stage firmware
-- LuminaCore_ESP_V4_9.ino — retained V4.9 reference
-- docs/HARDWARE_AND_SAFETY.md — wiring and safety validation details
-- docs/TEST_PLAN.md — repeatable bench and demonstration tests
-
-## Roadmap
-
-Higher-level features such as continuous adaptive brightness, display/dashboard integration, and dedicated current/power telemetry are intentionally deferred until after selection. V5.0 prioritizes a dependable, explainable demonstration of the existing lamp.
+A few things are intentionally not claimed here: continuous adaptive brightness, fall detection, clinically validated fall prevention, or circadian-health benefits. The current firmware does not implement or validate those features. No need to make the README more powerful than the actual lamp.

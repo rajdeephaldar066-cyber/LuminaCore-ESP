@@ -2,22 +2,20 @@
  ====================================================================================
   LUMINACORE ESP — FIRMWARE V5.0
   Target Architecture: ESP32 Dev Board (Dual-Core, 3.3V Logic)
-  Application: Ambient-aware assistive lamp for nighttime mobility support and task lighting. Not a fall detector or medical device.
+  Application: Ambient-aware assistive lamp for nighttime mobility support and task lighting.
 
   Base: V4.8 (full build WITH battery monitoring / voltage divider on GPIO34).
 
   Patch Notes (V5.0):
-    0. Selection-stage release; retains existing features without post-selection expansion.
     1. Battery ADC uses ESP32 calibrated millivolt readings instead of a fixed reference;
        divider ratio and calibration multiplier require bench verification.
     2. Watchdog initialization and task subscription results are checked.
     3. I2C timeout is bounded and restored after bus recovery; retry backoff saturates.
-    4. Documentation avoids unsupported clinical, circadian-health and fall-prevention claims.
 
-  Retained from the V4.x baseline:
+  Core behavior and reliability improvements:
     1. FastLED power cap fixed. setMaxPowerInVoltsAndMilliamps() takes VOLTS as a
        uint8_t. Earlier versions passed 5000 (millivolts), which truncates to 136,
-       making the "1.5A cap" a ~204W budget that never engaged. Now passes 5.
+       making the previous current setting an unrealistic budget that never engaged. Now passes 5.
        NOTE: with the cap actually working, full warm white (~2.8A by FastLED's
        model) is limited to roughly brightness 135/255, so the top 2-3 TASK_ACTIVE
        brightness steps will look identical. Tune the steps or the cap on the bench.

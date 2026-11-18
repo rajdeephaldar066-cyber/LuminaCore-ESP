@@ -1,46 +1,53 @@
-# Hardware, Wiring & Safety Notes
+# Hardware and Safety Notes
 
-This document describes the current V5.0 firmware assumptions. Verify every item against the actual assembled lamp before applying battery power.
+This document records the hardware assumptions made by the current LuminaCore ESP firmware. Treat the pin map and component values as a design reference, then verify them against the physical lamp before applying battery power.
 
 ## Pin assignment
 
-| Function | GPIO | Firmware configuration |
+| Function | ESP32 GPIO | Configuration |
 |---|---:|---|
 | APDS-9930 SDA | 21 | I2C |
 | APDS-9930 SCL | 22 | I2C |
 | PIR output | 27 | Digital input |
-| LED ring, 16 pixels | 25 | WS2812B / GRB |
-| LED strip, 60 pixels | 26 | WS2812B / GRB |
-| Battery ADC | 34 | ADC input |
+| LED ring, 16 pixels | 25 | WS2812B, GRB |
+| LED strip, 60 pixels | 26 | WS2812B, GRB |
+| Battery ADC | 34 | ADC input through divider |
 | Override / deep-sleep wake | 13 | Active LOW, ext0 |
-| Mode | 14 | Active LOW |
-| Brightness Up / Down | 32 / 33 | Active LOW |
-| Emergency | 15 | Active LOW; strapping pin |
+| Mode button | 14 | Active LOW |
+| Brightness Up | 32 | Active LOW |
+| Brightness Down | 33 | Active LOW |
+| Emergency button | 15 | Active LOW; strapping-pin consideration |
 
-Firmware LED count is **76 total (16 + 60)**. Verify physical count and power draw; do not use older documents that may state 70.
+The source configures 76 LEDs total. Confirm the physical pixel count, data direction, common ground, and power injection points.
 
 ## Battery measurement
 
-The source assumes a 2S Li-ion pack and a 22k/10k divider, represented by VOLTAGE_DIVIDER_RATIO = 3.20. V5.0 samples analogReadMilliVolts() and multiplies by the divider ratio and BATTERY_VOLTAGE_CALIBRATION.
+The firmware assumes a 2S Li-ion pack and a nominal 22k/10k divider. The conversion uses `analogReadMilliVolts()`, `VOLTAGE_DIVIDER_RATIO = 3.20`, and `BATTERY_VOLTAGE_CALIBRATION = 1.000`.
 
-- Measure divider resistors and pack voltage with a calibrated multimeter.
-- Compare serial output with the multimeter at multiple pack voltages.
-- Adjust both constants only from measured data.
-- Confirm ADC pin voltage never exceeds the ESP32 board's permitted input range.
-- Treat 6.8V boot, 6.6V pre-warning, and 6.2V hard cutoff as provisional until cell datasheet and BMS requirements are checked.
+Measure the actual divider resistors and compare the reported battery voltage with a multimeter at several charge levels. Adjust the ratio and calibration multiplier using measured results. Confirm that the ADC pin voltage stays within the ESP32 board's permitted range under maximum pack voltage.
 
-The hard cutoff is allowed to shut down even in Emergency mode. This can silence the signal; it is a known unresolved trade-off, not a certified safety behavior.
+The present firmware thresholds are 6.8 V for boot floor, 6.6 V for warning, and 6.2 V for hard cutoff. They are provisional until verified against the exact cell chemistry and manufacturer limits, BMS behavior, temperature range, and loaded voltage sag.
 
-## LED supply and thermal safety
+The hard cutoff can shut down the device even while Emergency mode is active. This protects against excessive battery discharge, but it can silence the emergency light. The trade-off remains in the firmware and must be understood before using the device in any real safety-critical context.
 
-The FastLED current setting is a software estimate only. It cannot replace a fuse, BMS, current-limited bench supply, correctly sized wiring/connectors, or thermal checks. Measure worst-case current with both zones at full white and verify converter temperature and 5V rail stability.
+## LED supply and thermal behavior
 
-## Boot and wake tests
+The FastLED current setting is an estimate used by the library to scale LED output. It is not a fuse or a hardware current limiter. The configured estimate is 4,000 mA at 5 V. Measure actual full-white current with both zones active and verify the power supply, converter, battery, BMS, wiring, connectors, and fuse ratings.
 
-GPIO15 is a strapping pin on common ESP32 modules. Cold boot with Emergency held and released. GPIO13 is used for ext0 wake; confirm active-low wiring and ensure the wake button is not left in a state that causes immediate repeated wakeups.
+Check the 5 V rail for voltage drop and observe converter, wire, connector, and LED temperatures during sustained operation. Do not infer safe operating current from the FastLED setting alone.
+
+## ESP32 boot and wake behavior
+
+GPIO15 is a strapping pin on common ESP32 modules. Test cold boot with the Emergency button pressed and released; the external circuit must not force an unintended strap level during reset.
+
+GPIO13 is configured for active-low ext0 deep-sleep wake. Verify RTC pull-up behavior, button wiring, wake polarity, and release behavior on the exact board used in the lamp.
 
 ## Sensor behavior
 
-APDS-9930 lux readings are checked only after PIR motion while in Sleep. Night Assist trigger threshold is 15 lux. Firmware does not implement continuous lux-driven brightness adjustment. If sensor initialization or repeated reads fail, it currently returns 0 lux (assume dark), favoring illumination but potentially causing nuisance activation.
+The APDS-9930 is polled only after PIR motion while the system is in Sleep. A reading at or below 15 lux allows Night Assist to start. The firmware does not continuously adjust lamp brightness from lux readings.
 
-PIR detects motion, not a fall. Do not describe the device as a fall detector or claim validated fall prevention.
+If initialization fails or repeated lux reads fail, the current fallback reports 0 lux, effectively assuming darkness. This favors lighting availability but can cause nuisance activation. The PIR is a motion sensor; it does not identify falls.
+
+## General electrical handling
+
+Use a regulated, current-limited bench supply during bring-up. Add a properly rated fuse and use a suitable BMS for the battery pack. Confirm polarity before connection, keep grounds common where required, and avoid connecting or disconnecting LED power wiring while energized.
