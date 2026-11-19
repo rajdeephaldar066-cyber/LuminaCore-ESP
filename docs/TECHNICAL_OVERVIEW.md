@@ -35,7 +35,7 @@ The Zone 1 ring displays amber at a raw target level of 76/255. Zone 2 remains o
 
 ### Task Active
 
-Both LED zones display warm white. The Up and Down buttons adjust the requested brightness in steps of 25, within the configured bounds. A gamma 2.8 lookup table shapes the output, with a minimum output floor of 6.
+Both LED zones display the selected colour preset. Five presets are available: warm white (default), soft peach, muted lavender, gentle sage, and soft sky. Press Mode while in Task Active to cycle through them; Up and Down continue to adjust brightness. Override exits Task Active. A gamma 2.8 lookup table shapes the output, with a minimum output floor of 6. These RGB presets are ambient colour choices, not certified task-lighting spectra.
 
 ### Emergency
 
@@ -82,14 +82,14 @@ The main loop feeds the watchdog only when the firmware successfully subscribed 
 
 FastLED is configured for a 5 V rail and a 4,000 mA software current estimate. This setting is not a physical current limiter. It does not replace a BMS, fuse, rated power converter, correctly sized wires, or thermal validation.
 
-Night Assist uses amber, Task Active uses warm white, Emergency uses red, and Low Power Alert uses a pulsing amber ring. RGB values alone do not establish spectral characteristics or health effects.
+Night Assist uses amber, Task Active uses one of five selectable calm RGB presets, Emergency uses red, and Low Power Alert uses a pulsing amber ring. RGB values alone do not establish spectral characteristics or health effects.
 
 ## 8. Controls
 
 | Control | GPIO | Action |
 |---|---:|---|
 | Override | 13 | Toggles between Task Active and Sleep; also used for ext0 wake |
-| Mode | 14 | Cycles Sleep, Night Assist, Task Active |
+| Mode | 14 | Advances Sleep to Night Assist and Night Assist to Task Active; cycles colour presets while in Task Active |
 | Brightness Up | 32 | Increases target brightness |
 | Brightness Down | 33 | Decreases target brightness |
 | Emergency | 15 | Enters or exits Emergency |
