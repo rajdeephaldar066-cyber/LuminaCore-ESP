@@ -16,9 +16,9 @@ If the lux sensor is unavailable, the firmware assumes darkness. This can make N
 
 ## Task lighting
 
-Press Mode to enter Task Active from Night Assist. Both LED zones illuminate warm white. Use Brightness Up and Brightness Down to change the output.
+Press Mode to enter Task Active from Night Assist. Both LED zones start in warm white. While in Task Active, press Mode to cycle through five calm colour presets: warm white, soft peach, muted lavender, gentle sage, and soft sky. Brightness Up and Brightness Down adjust the output without changing the selected colour.
 
-Press Mode again to return to Sleep. The Override button also toggles between Task Active and Sleep during normal operation.
+Use the Override button to leave Task Active and return to Sleep. The selected colour remains available the next time Task Active is entered until another preset is chosen. These are RGB ambience presets; their appearance does not establish colour-rendering quality or suitability for precision work.
 
 ## Emergency lighting
 
