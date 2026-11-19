@@ -1,12 +1,12 @@
 /*
  ====================================================================================
-  LUMINACORE ESP — FIRMWARE V5.0
+  LUMINACORE ESP — FIRMWARE V5.1
   Target Architecture: ESP32 Dev Board (Dual-Core, 3.3V Logic)
   Application: Ambient-aware assistive lamp for nighttime mobility support and task lighting.
 
   Base: V4.8 (full build WITH battery monitoring / voltage divider on GPIO34).
 
-  Patch Notes (V5.0):
+  Patch Notes (V5.1):
     1. Battery ADC uses ESP32 calibrated millivolt readings instead of a fixed reference;
        divider ratio and calibration multiplier require bench verification.
     2. Watchdog initialization and task subscription results are checked.
@@ -145,7 +145,16 @@ bool lastFrameWasBlack            = false;
 
 // LED color presets; RGB channel values are not a spectral or health measurement.
 const CRGB COLOR_NIGHT_AMBER = CRGB(255, 100, 0);
-const CRGB COLOR_TASK_WARM       = CRGB(255, 214, 170);
+const CRGB TASK_COLOR_PRESETS[] = {
+  CRGB(255, 214, 170), // Warm white — default
+  CRGB(255, 184, 150), // Soft peach
+  CRGB(210, 175, 220), // Muted lavender
+  CRGB(160, 205, 170), // Gentle sage
+  CRGB(170, 205, 235)  // Soft sky
+};
+const uint8_t TASK_COLOR_PRESET_COUNT =
+    sizeof(TASK_COLOR_PRESETS) / sizeof(TASK_COLOR_PRESETS[0]);
+uint8_t taskColorPresetIndex = 0;
 const CRGB COLOR_EMERGENCY       = CRGB(255, 0, 0);
 
 // Tracking Variables
@@ -281,7 +290,7 @@ void setup() {
   }
 
   transitionTo(STATE_SLEEP);
-  Serial.println(F("[SYSTEM] LuminaCore ESP Firmware V5.0 Ready."));
+  Serial.println(F("[SYSTEM] LuminaCore ESP Firmware V5.1 Ready."));
 }
 
 // ==================================================================================
@@ -532,10 +541,15 @@ void debounceButton(Button &btn) {
             transitionTo(currentState == STATE_TASK_ACTIVE ? STATE_SLEEP : STATE_TASK_ACTIVE);
           }
         } else if (btn.pin == PIN_BTN_MODE) {
-          // Cyclic Step Action: SLEEP -> NIGHT_ASSIST -> TASK_ACTIVE -> SLEEP.
-          // Same Emergency guard as Override.
+          // In Task Active, Mode cycles the calm colour presets. Override remains
+          // the direct way to leave Task Active; other states retain the state cycle.
           if (currentState != STATE_EMERGENCY) {
-            if (currentState == STATE_SLEEP) {
+            if (currentState == STATE_TASK_ACTIVE) {
+              taskColorPresetIndex =
+                  (taskColorPresetIndex + 1) % TASK_COLOR_PRESET_COUNT;
+              Serial.print(F("[LIGHT] Task colour preset: "));
+              Serial.println(taskColorPresetIndex);
+            } else if (currentState == STATE_SLEEP) {
               transitionTo(STATE_NIGHT_ASSIST);
             } else if (currentState == STATE_NIGHT_ASSIST) {
               transitionTo(STATE_TASK_ACTIVE);
@@ -650,8 +664,8 @@ void applyLighting() {
       break;
 
     case STATE_TASK_ACTIVE:
-      fill_solid(zone1, NUM_LEDS_ZONE1, COLOR_TASK_WARM);
-      fill_solid(zone2, NUM_LEDS_ZONE2, COLOR_TASK_WARM);
+      fill_solid(zone1, NUM_LEDS_ZONE1, TASK_COLOR_PRESETS[taskColorPresetIndex]);
+      fill_solid(zone2, NUM_LEDS_ZONE2, TASK_COLOR_PRESETS[taskColorPresetIndex]);
       break;
 
     case STATE_EMERGENCY:
